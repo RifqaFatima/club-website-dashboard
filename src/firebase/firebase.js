@@ -17,4 +17,9 @@ const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
 
+// Placeholder functions for Phase 1
+export const signup = () => {};
+export const login = () => {};
+export const fetchProfile = () => {};
+
 export { auth, db };
