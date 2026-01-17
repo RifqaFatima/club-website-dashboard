@@ -1,4 +1,4 @@
-import { doc, getDoc } from "firebase/firestore";
+import { doc, getDoc, collection, getDocs } from "firebase/firestore";
 import { db } from "./firebase";
 
 /**
@@ -39,4 +39,22 @@ export const getUserData = async (uid) => {
   }
 
   return userSnap.data();
+};
+
+export const getAllMembers = async () => {
+  try {
+    const membersCol = collection(db, "memberProfiles");
+    const snapshot = await getDocs(membersCol);
+    
+    const membersList = snapshot.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data()
+    }));
+    
+    console.log('✅ Fetched all members:', membersList.length);
+    return membersList;
+  } catch (error) {
+    console.error('❌ Error fetching members:', error);
+    throw new Error("Failed to fetch members: " + error.message);
+  }
 };
