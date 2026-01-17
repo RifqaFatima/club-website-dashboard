@@ -1,16 +1,12 @@
-
-import { auth, db } from "./firebase/firebase";
-
-import './App.css'
+import TestBackend from './firebase/TestBackend';
+import LoginTest from './firebase/LoginTest';
 
 function App() {
-  
   return (
-    <>
-    <div className="text-red-500">React</div>
-    </>
-     
-  )
+    <div>
+      Test
+    </div>
+  );
 }
 
-export default App
+export default App;
