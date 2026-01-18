@@ -16,12 +16,19 @@ export const loginMember = async (email, password) => {
     password
   );
 
+  //TEMPORARY COMMENT OUT!!!
   const uid = userCredential.user.uid;
  
-  const profile = await getMemberProfile(uid);
+  // const profile = await getMemberProfile(uid);
 
-  return { uid, profile };
+ 
+  //RETURN TEMPORARILY!
+
+  console.log('✅ Login successful! UID:', uid);
+    return { uid, email: userCredential.user.email };
+
 } catch (error) {
+    console.error('❌ Login failed:', error.code, error.message); // This will show the real error
     throw new Error("Login failed: " + error.message);
   }
 };

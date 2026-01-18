@@ -1,13 +1,16 @@
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
-import { Menu, X } from 'lucide-react';
+import { Link, useNavigate } from 'react-router-dom';
+import { Menu, X, LogOut } from 'lucide-react';
+import { useAuth } from '../../context/AuthContext';
 
 import logo from '../../assets/logo.png';
 
 const Navbar = () => {
     const [isOpen, setIsOpen] = useState(false);
+    const { currentUser, logout } = useAuth();
+    const navigate = useNavigate();
 
-    const navLinks = [
+    const publicNavLinks = [
         { name: 'Home', path: '/' },
         { name: 'About', path: '/about' },
         { name: 'Events', path: '/events' },
@@ -15,6 +18,21 @@ const Navbar = () => {
         { name: 'Gallery', path: '/gallery' },
         { name: 'Projects', path: '/projects' },
     ];
+
+    // Add Dashboard link only when logged in
+    const navLinks = currentUser 
+        ? [...publicNavLinks, { name: 'Team Dashboard', path: '/dashboard' }]
+        : publicNavLinks;
+
+    async function handleLogout() {
+        try {
+            await logout();
+            navigate('/');
+            setIsOpen(false);
+        } catch (error) {
+            console.error('Logout failed:', error);
+        }
+    }
 
     return (
         <nav className="sticky top-0 z-50 bg-gray-900 border-b border-gray-800 shadow-md">
@@ -45,12 +63,24 @@ const Navbar = () => {
                                 {link.name}
                             </Link>
                         ))}
-                        <Link
-                            to="/login"
-                            className="bg-yellow-500 hover:bg-yellow-600 text-gray-900 px-4 py-2 rounded-md text-sm font-bold transition-colors duration-200"
-                        >
-                            Member Login
-                        </Link>
+                        
+                        {/* Show Login or Logout based on auth state */}
+                        {currentUser ? (
+                            <button
+                                onClick={handleLogout}
+                                className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-md text-sm font-bold transition-colors duration-200 flex items-center gap-2"
+                            >
+                                <LogOut size={16} />
+                                Logout
+                            </button>
+                        ) : (
+                            <Link
+                                to="/login"
+                                className="bg-yellow-500 hover:bg-yellow-600 text-gray-900 px-4 py-2 rounded-md text-sm font-bold transition-colors duration-200"
+                            >
+                                Member Login
+                            </Link>
+                        )}
                     </div>
 
                     {/* Mobile Menu Button */}
@@ -79,13 +109,25 @@ const Navbar = () => {
                                 {link.name}
                             </Link>
                         ))}
-                        <Link
-                            to="/login"
-                            className="bg-yellow-500 hover:bg-yellow-600 text-gray-900 block px-3 py-2 rounded-md text-base font-bold mt-4"
-                            onClick={() => setIsOpen(false)}
-                        >
-                            Member Login
-                        </Link>
+                        
+                        {/* Show Login or Logout in mobile menu */}
+                        {currentUser ? (
+                            <button
+                                onClick={handleLogout}
+                                className="bg-red-600 hover:bg-red-700 text-white w-full text-left px-3 py-2 rounded-md text-base font-bold mt-4 flex items-center gap-2"
+                            >
+                                <LogOut size={16} />
+                                Logout
+                            </button>
+                        ) : (
+                            <Link
+                                to="/login"
+                                className="bg-yellow-500 hover:bg-yellow-600 text-gray-900 block px-3 py-2 rounded-md text-base font-bold mt-4"
+                                onClick={() => setIsOpen(false)}
+                            >
+                                Member Login
+                            </Link>
+                        )}
                     </div>
                 </div>
             )}
