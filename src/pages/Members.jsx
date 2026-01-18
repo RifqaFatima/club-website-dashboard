@@ -48,8 +48,20 @@ const Members = () => {
             });
         });
 
-        // Return Core Team first, then others sorted alphabetically
-        return [...coreNames, ...Array.from(otherMembers).sort()];
+        // Combine and map to objects
+        const sortedOthers = Array.from(otherMembers).sort();
+        const allNames = [...coreNames, ...sortedOthers];
+
+        return allNames.map(name => {
+            const coreMember = coreTeam.find(m => m.name === name);
+            if (coreMember) return coreMember;
+
+            return {
+                name: name,
+                role: "Member",
+                image: `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=random`
+            };
+        });
     };
 
     return (
@@ -114,10 +126,17 @@ const Members = () => {
                 {/* All Members Section */}
                 {activeTab === 'all' && (
                     <div className="animate-fade-in">
-                        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                             {getAllMembers().map((member, index) => (
-                                <div key={index} className="bg-gray-800 p-4 rounded-lg border border-gray-700 hover:border-gray-500 transition-colors text-center">
-                                    <h3 className="text-lg font-medium text-gray-200">{member}</h3>
+                                <div key={index} className="bg-gray-800 rounded-lg p-6 text-center transform hover:-translate-y-2 transition-transform duration-300 shadow-lg border border-gray-700 hover:border-gray-500">
+                                    <img
+                                        src={member.image}
+                                        alt={member.role}
+                                        className="w-24 h-24 rounded-full mx-auto mb-4 object-cover border-2 border-gray-400"
+                                    />
+                                    <h3 className="text-lg font-bold text-white mb-1">{member.name}</h3>
+                                    <p className="text-gray-400 font-medium text-sm mb-1">{member.role}</p>
+                                    <p className="text-gray-500 text-xs">IEEE CS AMU</p>
                                 </div>
                             ))}
                         </div>
