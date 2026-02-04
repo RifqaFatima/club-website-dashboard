@@ -19,9 +19,9 @@ const Navbar = () => {
         { name: 'Projects', path: '/projects' },
     ];
 
-    // Add Dashboard link only when logged in
+    // Add Dashboard and Project Timeline links only when logged in
     const navLinks = currentUser 
-        ? [...publicNavLinks, { name: 'Team Dashboard', path: '/dashboard' }]
+        ? [...publicNavLinks, { name: 'Team Dashboard', path: '/dashboard' }, { name: 'Project Timeline', path: '/dashboard/projects' }]
         : publicNavLinks;
 
     async function handleLogout() {
