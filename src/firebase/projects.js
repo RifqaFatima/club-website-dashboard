@@ -1,10 +1,11 @@
 /**
- * Firebase Firestore helper functions for managing projects and tasks
- * NOTE:
- * - This file assumes:
- *   - projects/{projectId}.leaderId = Firebase Auth UID (string)
- *   - memberProfiles will eventually use UID as document ID
- * - Firestore Security Rules are the final authority for permissions
+ * projects.js
+ * -----------------------------------
+ * Service layer for Projects & Tasks
+ *
+ * Assumptions:
+ * - projects/{projectId}.leaderId === Auth UID (string)
+ * - Firestore Rules are the final authority
  */
 
 import {
@@ -15,8 +16,7 @@ import {
   addDoc,
   updateDoc,
   deleteDoc,
-  serverTimestamp,
-  query
+  serverTimestamp
 } from "firebase/firestore";
 
 import { db } from "./firestore";
@@ -26,72 +26,62 @@ import { db } from "./firestore";
 ========================= */
 
 /**
- * Fetch all projects (read-only for members)
+ * Fetch all projects
  */
 export async function getAllProjects() {
   const projectsRef = collection(db, "projects");
   const snapshot = await getDocs(projectsRef);
 
-  return snapshot.docs.map(docSnap => ({
-    id: docSnap.id,
-    ...docSnap.data()
+  return snapshot.docs.map(d => ({
+    id: d.id,
+    ...d.data()
   }));
 }
 
 /**
- * Fetch a single project by ID
+ * Check if user is leader of a project
+ * (UX-level check only)
  */
-export async function getProjectById(projectId) {
+export async function isProjectLeader(projectId, userId) {
   const projectRef = doc(db, "projects", projectId);
   const snap = await getDoc(projectRef);
 
-  if (!snap.exists()) return null;
+  if (!snap.exists()) return false;
 
-  return {
-    id: snap.id,
-    ...snap.data()
-  };
-}
-
-/**
- * Convenience helper (UI only)
- * Checks if given user is leader of project
- *
- */
-export async function isProjectLeader(projectId, userUid) {
-  const project = await getProjectById(projectId);
-  if (!project) return false;
-
-  return project.leaderId === userUid;
+  return snap.data().leaderId === userId;
 }
 
 /* =========================
-   TASKS (SUBCOLLECTION)
+   TASKS
 ========================= */
 
 /**
- * Fetch all tasks for a project
+ * Fetch tasks of a specific project
  */
 export async function getProjectTasks(projectId) {
   const tasksRef = collection(db, "projects", projectId, "tasks");
   const snapshot = await getDocs(tasksRef);
 
-  return snapshot.docs.map(docSnap => ({
-    id: docSnap.id,
-    ...docSnap.data()
+  return snapshot.docs.map(d => ({
+    id: d.id,
+    ...d.data()
   }));
 }
 
 /**
- * Add a new task
- * (Allowed only for project leader by Firestore rules)
+ * Add new task (leader-only)
  */
-export async function addTask(projectId, taskData) {
+export async function addTask(projectId, taskData, userId) {
+  const isLeader = await isProjectLeader(projectId, userId);
+  if (!isLeader) {
+    throw new Error("Only project leader can add tasks");
+  }
+
   const tasksRef = collection(db, "projects", projectId, "tasks");
 
   return await addDoc(tasksRef, {
     title: taskData.title,
-    status: taskData.status || "in-progress",
+    status: "in-progress",
     startDate: taskData.startDate || serverTimestamp(),
     deadline: taskData.deadline || null,
     completedAt: null,
@@ -100,9 +90,14 @@ export async function addTask(projectId, taskData) {
 }
 
 /**
- * Update task fields (leader-only)
+ * Update task (leader-only)
  */
-export async function updateTask(projectId, taskId, updates) {
+export async function updateTask(projectId, taskId, updates, userId) {
+  const isLeader = await isProjectLeader(projectId, userId);
+  if (!isLeader) {
+    throw new Error("Only project leader can update tasks");
+  }
+
   const taskRef = doc(db, "projects", projectId, "tasks", taskId);
 
   return await updateDoc(taskRef, {
@@ -114,7 +109,12 @@ export async function updateTask(projectId, taskId, updates) {
 /**
  * Mark task as completed
  */
-export async function completeTask(projectId, taskId) {
+export async function completeTask(projectId, taskId, userId) {
+  const isLeader = await isProjectLeader(projectId, userId);
+  if (!isLeader) {
+    throw new Error("Only project leader can complete tasks");
+  }
+
   const taskRef = doc(db, "projects", projectId, "tasks", taskId);
 
   return await updateDoc(taskRef, {
@@ -124,9 +124,14 @@ export async function completeTask(projectId, taskId) {
 }
 
 /**
- * Delete a task (leader-only)
+ * Delete task (leader-only)
  */
-export async function deleteTask(projectId, taskId) {
+export async function deleteTask(projectId, taskId, userId) {
+  const isLeader = await isProjectLeader(projectId, userId);
+  if (!isLeader) {
+    throw new Error("Only project leader can delete tasks");
+  }
+
   const taskRef = doc(db, "projects", projectId, "tasks", taskId);
   return await deleteDoc(taskRef);
 }
