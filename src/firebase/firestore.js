@@ -1,24 +1,29 @@
-import { doc, getDoc, collection, getDocs } from "firebase/firestore";
+import { doc, getDoc, collection, getDocs, query, where, limit } from "firebase/firestore";
 import { db } from "./firebase";
 
-/**
- * Fetch member profile for logged-in user
- * @param {string} uid - Firebase Auth UID
- * @returns {object} member profile data
- */
 export const getMemberProfile = async (uid) => {
   if (!uid) {
-    throw new Error("UID is required to fetch member profile");
+    throw new Error("UID is required");
   }
 
-  const profileRef = doc(db, "memberProfiles", uid);
-  const profileSnap = await getDoc(profileRef);
+  const q = query(
+    collection(db, "memberProfiles"),
+    where("authUid", "==", uid),
+    limit(1)
+  );
 
-  if (!profileSnap.exists()) {
-    throw new Error("Member profile not found");
+  const snapshot = await getDocs(q);
+
+  if (snapshot.empty) {
+    throw new Error("Member profile not found for this UID");
   }
 
-  return profileSnap.data();
+  const docSnap = snapshot.docs[0];
+
+  return {
+    id: docSnap.id, // IMPORTANT: profileId
+    ...docSnap.data()
+  };
 };
 
 /**
