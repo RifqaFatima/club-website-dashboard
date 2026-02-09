@@ -7,7 +7,12 @@ import { useAuth } from '../../context/AuthContext';
 export default function ProjectCard({ project, onUpdate }) {
   const [expanded, setExpanded] = useState(false);
   const [showManage, setShowManage] = useState(false);
-  const { currentUser } = useAuth();
+  const { currentUser, userProfile } = useAuth();
+  
+  // Use authUid (currentUser.uid) for permissions & task actions
+  const authUid = currentUser?.uid;
+  // Use profileId only if needed for display/navigation
+  const profileId = userProfile?.id;
 
   // compute progress
   const progress = useMemo(() => {
@@ -30,8 +35,8 @@ export default function ProjectCard({ project, onUpdate }) {
               <h3 className="text-xl font-semibold text-white">{project.name}</h3>
 
               {/* leader badge */}
-              {currentUser && currentUser.uid === project.leaderId && (
-                <span className="ml-2 text-xs px-2 py-1 bg-gray-800 border border-yellow-600 text-yellow-400 rounded-full font-semibold">YOU'RE LEADER</span>
+              {authUid && authUid === project.leaderId && (
+                <span className="ml-2 text-xs px-2 py-1 bg-gray-800 border border-yellow-600 text-yellow-400 rounded-full font-semibold">YOU&apos;RE LEADER</span>
               )}
             </div>
             <p className="text-sm text-gray-400 mt-1">Leader: <span className="font-medium text-white">{project.leaderName}</span></p>
@@ -58,7 +63,7 @@ export default function ProjectCard({ project, onUpdate }) {
           </div>
 
           <div className="flex flex-col items-end gap-2">
-            {currentUser && currentUser.uid === project.leaderId && (
+            {authUid && authUid === project.leaderId && (
               <button
                 onClick={() => setShowManage(true)}
                 className="px-3 py-1 bg-indigo-600 hover:bg-indigo-500 text-white rounded-md text-sm"
