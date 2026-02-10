@@ -1,24 +1,43 @@
-import { doc, getDoc, collection, getDocs } from "firebase/firestore";
+import { doc, getDoc, collection, getDocs, query, where } from "firebase/firestore";
 import { db } from "./firebase";
 
 /**
- * Fetch member profile for logged-in user
- * @param {string} uid - Firebase Auth UID
- * @returns {object} member profile data
+ * Fetch member profile for logged-in user by auth UID
+ * Returns both the Firestore doc ID (profileId) and all profile data
+ * @param {string} authUid - Firebase Auth UID
+ * @returns {object} member profile data with { id (profileId), authUid, name, role, ...}
  */
-export const getMemberProfile = async (uid) => {
-  if (!uid) {
-    throw new Error("UID is required to fetch member profile");
+export const getMemberProfile = async (authUid) => {
+  if (!authUid) {
+    throw new Error("Auth UID is required to fetch member profile");
   }
 
-  const profileRef = doc(db, "memberProfiles", uid);
-  const profileSnap = await getDoc(profileRef);
+  try {
+    // Query memberProfiles collection where authUid matches
+    const profilesCol = collection(db, "memberProfiles");
+    const q = query(profilesCol, where("authUid", "==", authUid));
+    const querySnapshot = await getDocs(q);
 
-  if (!profileSnap.exists()) {
-    throw new Error("Member profile not found");
+    if (querySnapshot.empty) {
+      throw new Error("Member profile not found for this user");
+    }
+
+    // Get the first matching profile
+    const profileDoc = querySnapshot.docs[0];
+    const profileData = profileDoc.data();
+
+    // Return with both id (Firestore doc ID) and authUid
+    return {
+      id: profileDoc.id,  // Firestore document ID (profileId)
+      authUid: profileData.authUid,
+      name: profileData.name,
+      role: profileData.role,
+      ...profileData
+    };
+  } catch (error) {
+    console.error("Error fetching member profile:", error);
+    throw new Error("Failed to fetch member profile: " + error.message);
   }
-
-  return profileSnap.data();
 };
 
 /**

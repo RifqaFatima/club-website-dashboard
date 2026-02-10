@@ -10,6 +10,7 @@ import Projects from './publicSite/pages/Projects';
 import Gallery from './publicSite/pages/Gallery';
 import Login from './auth/Login';
 import MemberDashboard from './memberDashboard/pages/memberDashboard';
+import ProjectTimeline from './memberDashboard/pages/ProjectTimeline';
 import ProtectedRoute from './components/ProtectedRoute';
 
 function App() {
@@ -37,6 +38,15 @@ function App() {
                     <MemberDashboard />
                   </ProtectedRoute>
                 } 
+              />
+
+              <Route
+                path="/dashboard/projects"
+                element={
+                  <ProtectedRoute>
+                    <ProjectTimeline />
+                  </ProtectedRoute>
+                }
               />
             </Routes>
           </main>

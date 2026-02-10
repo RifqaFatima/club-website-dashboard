@@ -15,11 +15,27 @@ export function useAuth() {
 
 export function AuthProvider({ children }) {
   const [currentUser, setCurrentUser] = useState(null);
+  const [userProfile, setUserProfile] = useState(null); // Stores { id (profileId), authUid, name, role, ... }
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
-      setCurrentUser(user);
+    const unsubscribe = onAuthStateChanged(auth, async (user) => {
+      if (user) {
+        // User is logged in - store auth user and fetch profile
+        setCurrentUser(user);
+        try {
+          const { getMemberProfile } = await import('../firebase/firestore');
+          const profile = await getMemberProfile(user.uid);
+          setUserProfile(profile);
+        } catch (error) {
+          console.error('Error fetching user profile:', error);
+          setUserProfile(null);
+        }
+      } else {
+        // User is logged out
+        setCurrentUser(null);
+        setUserProfile(null);
+      }
       setLoading(false);
     });
     return unsubscribe;
@@ -34,7 +50,8 @@ export function AuthProvider({ children }) {
   }
 
   const value = {
-    currentUser,
+    currentUser,          // Firebase auth user with uid
+    userProfile,          // Member profile with { id (profileId), authUid, name, role, ... }
     loading,
     login,
     logout
