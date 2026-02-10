@@ -81,21 +81,43 @@ const ProjectTimeline = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-900 py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-6xl mx-auto text-center mb-8">
-        <div className="inline-flex items-center gap-3 bg-gray-800/40 px-4 py-3 rounded-md border border-gray-700 shadow-sm mx-auto">
-          <BarChart2 className="text-yellow-400" size={28} />
-          <div className="text-left">
-            <h1 className="text-2xl md:text-3xl font-semibold text-white">Project Timeline</h1>
-            <p className="text-gray-400 text-sm mt-1">Track progress across all club projects</p>
+    <div className="min-h-screen bg-gray-900 py-16 px-4 sm:px-6 lg:px-8 bg-[radial-gradient(circle_at_top,_var(--tw-gradient-stops))] from-gray-800/20 via-gray-900 to-black">
+      
+      {/* Refined Heading Section */}
+      <div className="max-w-6xl mx-auto text-center mb-16">
+        <div className="inline-flex flex-col items-center gap-4">
+          <div className="p-4 bg-gray-800/50 rounded-2xl border border-gray-700 shadow-xl shadow-yellow-500/5 group">
+            <BarChart2 className="text-yellow-500 group-hover:scale-110 transition-transform duration-300" size={32} />
+          </div>
+          
+          <div className="space-y-2">
+            <h1 className="text-4xl md:text-5xl font-black tracking-tight text-white italic uppercase">
+              Project <span className="bg-gradient-to-r from-yellow-400 to-yellow-600 bg-clip-text text-transparent">Timeline</span>
+            </h1>
+            <div className="flex items-center justify-center gap-3">
+              <span className="h-px w-8 bg-gray-700"></span>
+              <p className="text-gray-400 text-sm font-medium tracking-[0.2em] uppercase">
+                Tracking Progress
+              </p>
+              <span className="h-px w-8 bg-gray-700"></span>
+            </div>
           </div>
         </div>
       </div>
 
       <div className="max-w-6xl mx-auto">
-        <div className="space-y-6">
+        <div className="space-y-8">
           {projects.map((project) => (
-            <ProjectCard key={project.id} project={project} onUpdate={updateProject} />
+            /* Hover Wrapper Integrated Here */
+            <div 
+              key={project.id} 
+              className="transform transition-all duration-500 hover:-translate-y-2 hover:shadow-[0_20px_50px_-12px_rgba(234,179,8,0.2)]"
+            >
+              <ProjectCard 
+                project={project} 
+                onUpdate={updateProject} 
+              />
+            </div>
           ))}
         </div>
       </div>
