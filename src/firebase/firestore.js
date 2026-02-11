@@ -25,7 +25,7 @@ export const getMemberProfile = async (uid) => {
     id: docSnap.id, // IMPORTANT: profileId
     ...docSnap.data()
   };
->>>>>>> sabiq/phase-ii
+
 };
 
 /**
