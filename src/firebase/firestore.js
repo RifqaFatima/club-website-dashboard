@@ -1,43 +1,31 @@
-import { doc, getDoc, collection, getDocs, query, where } from "firebase/firestore";
+
+import { doc, getDoc, collection, getDocs, query, where, limit } from "firebase/firestore";
 import { db } from "./firebase";
 
-/**
- * Fetch member profile for logged-in user by auth UID
- * Returns both the Firestore doc ID (profileId) and all profile data
- * @param {string} authUid - Firebase Auth UID
- * @returns {object} member profile data with { id (profileId), authUid, name, role, ...}
- */
-export const getMemberProfile = async (authUid) => {
-  if (!authUid) {
-    throw new Error("Auth UID is required to fetch member profile");
+export const getMemberProfile = async (uid) => {
+  if (!uid) {
+    throw new Error("UID is required");
   }
 
-  try {
-    // Query memberProfiles collection where authUid matches
-    const profilesCol = collection(db, "memberProfiles");
-    const q = query(profilesCol, where("authUid", "==", authUid));
-    const querySnapshot = await getDocs(q);
+  const q = query(
+    collection(db, "memberProfiles"),
+    where("authUid", "==", uid),
+    limit(1)
+  );
 
-    if (querySnapshot.empty) {
-      throw new Error("Member profile not found for this user");
-    }
+  const snapshot = await getDocs(q);
 
-    // Get the first matching profile
-    const profileDoc = querySnapshot.docs[0];
-    const profileData = profileDoc.data();
-
-    // Return with both id (Firestore doc ID) and authUid
-    return {
-      id: profileDoc.id,  // Firestore document ID (profileId)
-      authUid: profileData.authUid,
-      name: profileData.name,
-      role: profileData.role,
-      ...profileData
-    };
-  } catch (error) {
-    console.error("Error fetching member profile:", error);
-    throw new Error("Failed to fetch member profile: " + error.message);
+  if (snapshot.empty) {
+    throw new Error("Member profile not found for this UID");
   }
+
+  const docSnap = snapshot.docs[0];
+
+  return {
+    id: docSnap.id, // IMPORTANT: profileId
+    ...docSnap.data()
+  };
+>>>>>>> sabiq/phase-ii
 };
 
 /**
