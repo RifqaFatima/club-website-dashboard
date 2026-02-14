@@ -8,6 +8,7 @@ import Events from './publicSite/pages/Events';
 import Members from './publicSite/pages/Members';
 import Projects from './publicSite/pages/Projects';
 import Gallery from './publicSite/pages/Gallery';
+//import ChangePassword from './auth/ChangePassword';
 import Login from './auth/Login';
 import MemberDashboard from './memberDashboard/pages/memberDashboard';
 import ProjectTimeline from './memberDashboard/pages/ProjectTimeline';
@@ -29,7 +30,7 @@ function App() {
               <Route path="/gallery" element={<Gallery />} />
               <Route path="/projects" element={<Projects />} />
               <Route path="/login" element={<Login />} />
-              
+            
               {/* Protected Route */}
               <Route 
                 path="/dashboard" 

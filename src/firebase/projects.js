@@ -51,14 +51,33 @@ async function canManageProject(projectId, userId) {
 /**
  * Fetch all projects
  */
+// export async function getAllProjects() {
+//   const projectsRef = collection(db, "projects");
+//   const snapshot = await getDocs(projectsRef);
+
+//   return snapshot.docs.map(d => ({
+//     id: d.id,
+//     ...d.data()
+//   }));
+// }
+
 export async function getAllProjects() {
   const projectsRef = collection(db, "projects");
   const snapshot = await getDocs(projectsRef);
 
-  return snapshot.docs.map(d => ({
-    id: d.id,
-    ...d.data()
-  }));
+  const projects = snapshot.docs.map(d => {
+    const data = d.data();
+    console.log('🔥 Fetched project:', d.id);
+    console.log('Raw data:', data);
+    console.log('leaderId from data:', data.leaderId);
+    
+    return {
+      id: d.id,
+      ...data
+    };
+  });
+
+  return projects;
 }
 
 /* =========================

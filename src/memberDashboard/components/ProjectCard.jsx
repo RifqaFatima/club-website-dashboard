@@ -115,12 +115,18 @@ export default function ProjectCard({ project, onUpdate }) {
   
   const authUid = currentUser?.uid;
 
+  // Handle both string and array leaderIds
+  const isLeader = Array.isArray(project.leaderId) 
+    ? project.leaderId.includes(authUid)
+    : project.leaderId === authUid;
+
   // 🔍 DEBUG - Remove this after testing
   console.log('=== PROJECT DEBUG ===');
   console.log('Project:', project.name);
   console.log('Current authUid:', authUid);
   console.log('Project leaderId:', project.leaderId);
-  console.log('Are they equal?', authUid === project.leaderId);
+  console.log('Is array?', Array.isArray(project.leaderId));
+  console.log('Am I leader?', isLeader);
   console.log('====================');
 
   // Compute progress
@@ -156,7 +162,7 @@ export default function ProjectCard({ project, onUpdate }) {
               <h3 className="text-xl font-bold text-white truncate">{project.name}</h3>
 
               {/* Leader Badge */}
-              {authUid && authUid === project.leaderId && (
+              {authUid && isLeader && (
                 <span className="px-3 py-1 bg-yellow-500/10 border border-yellow-500 text-yellow-400 rounded-full text-xs font-bold whitespace-nowrap">
                   YOU'RE LEADER
                 </span>
@@ -211,7 +217,7 @@ export default function ProjectCard({ project, onUpdate }) {
           <div className="flex flex-col items-end gap-3 flex-shrink-0">
             
             {/* Manage Button (Only for Leader) */}
-            {authUid && authUid === project.leaderId && (
+            {authUid && isLeader && (
               <button
                 onClick={() => setShowManage(true)}
                 className="px-4 py-2 bg-yellow-500 hover:bg-yellow-600 text-gray-900 rounded-md text-sm font-bold transition-colors shadow-lg hover:shadow-yellow-500/50 whitespace-nowrap"
@@ -244,7 +250,7 @@ export default function ProjectCard({ project, onUpdate }) {
             ) : (
               <div className="text-center py-8">
                 <p className="text-gray-400">No tasks added yet.</p>
-                {authUid && authUid === project.leaderId && (
+                {authUid && isLeader && (
                   <button
                     onClick={() => setShowManage(true)}
                     className="mt-4 px-4 py-2 bg-yellow-500 hover:bg-yellow-600 text-gray-900 rounded-md text-sm font-bold transition-colors"

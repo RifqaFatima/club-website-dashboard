@@ -120,8 +120,9 @@
 
 
 
-import { useState } from 'react';
-import { X, PlusCircle, Trash, Loader } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
+import { X, PlusCircle, Trash2, Loader, Edit2, Save, XCircle, AlertTriangle, CheckCircle, UserPlus, CheckSquare, Square, Calendar } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { addTask, updateTask, deleteTask } from '../../firebase/projects';
 
@@ -132,321 +133,259 @@ export default function ManageProjectModal({ project, onClose, onSave }) {
   const [tasks, setTasks] = useState(project.tasks || []);
   const [editing, setEditing] = useState(null);
   const [saving, setSaving] = useState(false);
+  const [showForm, setShowForm] = useState(false);
+  const [confirmDialog, setConfirmDialog] = useState({ show: false, title: '', message: '', onConfirm: null });
+  const [toast, setToast] = useState({ show: false, message: '', type: 'success' });
+
   const [form, setForm] = useState({ 
-    title: '', 
-    description: '', 
-    date: '', 
-    completedDate: '', 
-    status: 'In-Progress', 
-    priority: 'Medium', 
-    assignedTo: '', 
-    github: '' 
+    title: '', description: '', date: '', completedDate: '', 
+    status: 'In-Progress', priority: 'Medium', assignedTo: '', github: '' 
   });
   
   const { currentUser } = useAuth();
   const authUid = currentUser?.uid;
 
-  function startAdd() {
-    setEditing(null);
-    setForm({ 
-      title: '', 
-      description: '', 
-      date: '', 
-      completedDate: '', 
-      status: 'In-Progress', 
-      priority: 'Medium', 
-      assignedTo: '', 
-      github: '' 
-    });
-  }
+  // SCROLL LOCK
+  useEffect(() => {
+    const originalStyle = window.getComputedStyle(document.body).overflow;
+    document.body.style.overflow = 'hidden';
+    return () => { document.body.style.overflow = originalStyle; };
+  }, []);
 
-  function startEdit(task) {
-    setEditing(task.id);
-    setForm({ 
-      title: task.title, 
-      description: task.description || '', 
-      date: task.date, 
-      completedDate: task.completedDate || '', 
-      status: task.status, 
-      priority: task.priority || 'Medium', 
-      assignedTo: (task.assignedTo || []).join(', '), 
-      github: task.github || '' 
+  const showToast = (message, type = 'success') => {
+    setToast({ show: true, message, type });
+    setTimeout(() => setToast({ show: false, message: '', type: 'success' }), 3000);
+  };
+
+  const triggerConfirm = (title, message, action) => {
+    setConfirmDialog({ show: true, title, message, onConfirm: action });
+  };
+
+  // --- LOGIC: TOGGLE STATUS WITH TIMESTAMP ---
+  const toggleTaskStatus = async (task) => {
+    const isNowCompleted = task.status !== 'Completed';
+    // Format: "Feb 15, 2026"
+    const today = new Date().toLocaleDateString('en-US', { 
+      month: 'short', day: 'numeric', year: 'numeric' 
     });
-  }
+
+    const updatedTask = {
+      ...task,
+      status: isNowCompleted ? 'Completed' : 'In-Progress',
+      completedDate: isNowCompleted ? today : '' 
+    };
+
+    setSaving(true);
+    try {
+      await updateTask(project.id, task.id, updatedTask, authUid);
+      setTasks(prev => prev.map(t => t.id === task.id ? updatedTask : t));
+      showToast(isNowCompleted ? 'Mission Completed!' : 'Task Restored');
+    } catch (e) {
+      showToast(e.message, 'error');
+    } finally {
+      setSaving(false);
+    }
+  };
 
   async function saveForm() {
     if (!form.title || !form.date) {
-      alert('Title and deadline are required!');
+      showToast('Title and Deadline are required!', 'error');
       return;
     }
-    
     setSaving(true);
-    
     try {
+      // 1. Ensure we have a valid Date object or null
+      const deadlineDate = form.date ? new Date(form.date + 'T12:00:00') : null;
+
+      // 2. Build the object carefully - use empty strings instead of undefined
       const taskData = {
-        title: form.title,
-        description: form.description,
-        deadline: new Date(form.date + 'T00:00:00'),
-        status: form.status.toLowerCase().replace('-', '-'),
-        priority: form.priority,
-        assignedTo: form.assignedTo.split(',').map(s => s.trim()).filter(Boolean),
-        github: form.github
+        title: form.title?.trim() || '',
+        description: form.description?.trim() || '',
+        status: form.status || 'In-Progress',
+        priority: form.priority || 'Medium',
+        date: form.date || '', // The string version for the UI
+        deadline: deadlineDate, // The Date version for Firebase
+        completedDate: form.completedDate || '',
+        assignedTo: typeof form.assignedTo === 'string' 
+          ? form.assignedTo.split(',').map(s => s.trim()).filter(Boolean) 
+          : (form.assignedTo || []),
+        github: form.github?.trim() || ''
       };
 
+      // 3. Final safety check: remove any undefined keys just in case
+      Object.keys(taskData).forEach(key => 
+        taskData[key] === undefined && delete taskData[key]
+      );
+
       if (editing) {
-        // Update existing task
         await updateTask(project.id, editing, taskData, authUid);
-        
-        setTasks(prev => prev.map(t => 
-          t.id === editing ? {
-            id: editing,
-            ...form,
-            assignedTo: taskData.assignedTo
-          } : t
-        ));
+        setTasks(prev => prev.map(t => t.id === editing ? { ...t, ...taskData, id: editing } : t));
+        showToast('Task Updated');
       } else {
-        // Add new task
         const docRef = await addTask(project.id, taskData, authUid);
-        
-        const newTask = {
-          id: docRef.id,
-          title: form.title,
-          description: form.description,
-          date: form.date,
-          completedDate: '',
-          status: form.status,
-          priority: form.priority,
-          assignedTo: taskData.assignedTo,
-          github: form.github
-        };
-        
-        setTasks(prev => [...prev, newTask]);
+        setTasks(prev => [...prev, { id: docRef.id, ...taskData }]);
+        showToast('Task Created');
       }
-
-      setEditing(null);
-      setForm({ 
-        title: '', 
-        description: '', 
-        date: '', 
-        completedDate: '', 
-        status: 'In-Progress', 
-        priority: 'Medium', 
-        assignedTo: '', 
-        github: '' 
-      });
       
-      alert('Task saved successfully!');
-    } catch (error) {
-      console.error('Error saving task:', error);
-      alert('Failed to save task: ' + error.message);
-    } finally {
-      setSaving(false);
+      setShowForm(false);
+      setEditing(null);
+    } catch (e) { 
+      console.error("Firebase Error:", e);
+      showToast(e.message, 'error'); 
+    } finally { 
+      setSaving(false); 
     }
   }
+  
 
-  async function handleDeleteTask(taskId) {
-    if (!confirm('Are you sure you want to delete this task?')) return;
-    
-    setSaving(true);
-    
-    try {
-      await deleteTask(project.id, taskId, authUid);
-      setTasks(prev => prev.filter(t => t.id !== taskId));
-      alert('Task deleted successfully!');
-    } catch (error) {
-      console.error('Error deleting task:', error);
-      alert('Failed to delete task: ' + error.message);
-    } finally {
-      setSaving(false);
-    }
-  }
+  const handleDeleteTask = (taskId, taskTitle) => {
+    triggerConfirm('Delete Task?', `Are you sure you want to remove "${taskTitle}"?`, async () => {
+      setSaving(true);
+      try {
+        await deleteTask(project.id, taskId, authUid);
+        setTasks(prev => prev.filter(t => t.id !== taskId));
+        showToast('Task Purged');
+      } catch (e) { showToast(e.message, 'error'); }
+      finally { setSaving(false); setConfirmDialog({ show: false }); }
+    });
+  };
 
-  function saveProject() {
-    onSave({ ...project, tasks });
-    onClose();
-  }
+  const modalLayout = (
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center isolate overflow-hidden">
+      <div className="absolute inset-0 bg-black/95 backdrop-blur-xl" onClick={onClose} />
 
-  return (
-    <div className="fixed inset-0 bg-black bg-opacity-40 z-50 flex items-center justify-center p-4">
-      <div className="bg-gray-900 w-full max-w-3xl rounded-lg shadow-xl border border-gray-700 overflow-hidden max-h-[90vh] flex flex-col">
+      <div className="relative bg-gray-900 w-full max-w-4xl rounded-3xl shadow-2xl border border-white/10 flex flex-col max-h-[90vh] overflow-hidden m-4">
         
         {/* Header */}
-        <div className="p-4 flex items-center justify-between border-b border-gray-800 flex-shrink-0">
-          <h3 className="text-lg font-semibold text-white">Manage: {project.name}</h3>
-          <button 
-            onClick={onClose} 
-            className="p-1 rounded hover:bg-gray-800 text-gray-300"
-            disabled={saving}
-          >
-            <X />
+        <div className="p-8 bg-white/5 border-b border-white/10 flex items-center justify-between shrink-0">
+          <h3 className="text-3xl font-black text-white italic uppercase tracking-tighter">
+            Mission <span className="text-yellow-500">Control</span>
+          </h3>
+          <button onClick={onClose} className="p-3 hover:bg-white/10 rounded-full text-gray-500 hover:text-white transition-all">
+            <X size={24} />
           </button>
         </div>
 
-        {/* Content - Scrollable */}
-        <div className="p-4 space-y-4 overflow-y-auto flex-1">
-          
-          {/* Task List */}
-          <div className="space-y-2">
-            <div className="flex items-center justify-between">
-              <div className="text-sm text-gray-300 font-medium">Tasks ({tasks.length})</div>
-              <button 
-                onClick={startAdd} 
-                className="flex items-center gap-2 text-sm px-3 py-2 bg-green-600 hover:bg-green-700 rounded text-white disabled:opacity-50"
-                disabled={saving}
-              >
-                <PlusCircle size={16} /> Add Task
-              </button>
-            </div>
-            
-            <div className="space-y-2 max-h-60 overflow-y-auto">
-              {tasks.length === 0 ? (
-                <p className="text-gray-500 text-sm text-center py-4">No tasks yet. Click "Add Task" to create one.</p>
-              ) : (
-                tasks.map((t) => (
-                  <div key={t.id} className="flex items-center justify-between bg-gray-800 p-3 rounded border border-gray-700">
-                    <div className="flex-1 min-w-0">
-                      <div className="text-white font-medium truncate">{t.title}</div>
-                      <div className="text-xs text-gray-400">
-                        {t.date} • {t.status} • {t.priority}
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-2 ml-2 flex-shrink-0">
-                      <button 
-                        onClick={() => startEdit(t)} 
-                        className="px-2 py-1 text-sm bg-blue-600 hover:bg-blue-700 rounded text-white disabled:opacity-50"
-                        disabled={saving}
-                      >
-                        Edit
-                      </button>
-                      <button 
-                        onClick={() => handleDeleteTask(t.id)} 
-                        className="px-2 py-1 text-sm bg-red-600 hover:bg-red-700 rounded text-white disabled:opacity-50"
-                        disabled={saving}
-                      >
-                        <Trash size={16} />
-                      </button>
-                    </div>
+        {/* Content */}
+        <div className="p-8 overflow-y-auto flex-1 custom-scrollbar">
+          {!showForm && (
+            <button onClick={() => { setEditing(null); setShowForm(true); setForm({ title: '', description: '', date: '', completedDate: '', status: 'In-Progress', priority: 'Medium', assignedTo: '', github: '' }); }} className="w-full py-5 mb-8 bg-yellow-500 hover:bg-yellow-400 text-black font-black uppercase tracking-[0.2em] text-xs rounded-2xl transition-all shadow-[0_0_30px_rgba(234,179,8,0.2)] flex items-center justify-center gap-3">
+              <PlusCircle size={20} /> Deploy New Task
+            </button>
+          )}
+
+          {showForm && (
+            <div className="bg-white/5 p-8 rounded-3xl border border-yellow-500/20 mb-10 animate-in fade-in slide-in-from-top-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="md:col-span-2">
+                  <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest ml-1">Task Name</label>
+                  <input value={form.title} onChange={e => setForm({...form, title: e.target.value})} className="w-full mt-2 p-4 bg-black/40 border border-white/10 rounded-xl text-white focus:border-yellow-500 outline-none transition-all" />
+                </div>
+                
+                <div className="md:col-span-2">
+                  <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest ml-1">Assign To</label>
+                  <div className="relative mt-2">
+                    <UserPlus size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500" />
+                    <input value={form.assignedTo} onChange={e => setForm({...form, assignedTo: e.target.value})} className="w-full p-4 pl-12 bg-black/40 border border-white/10 rounded-xl text-white focus:border-yellow-500 outline-none" placeholder="Rifqa, Sabiq..." />
                   </div>
-                ))
-              )}
-            </div>
-          </div>
-
-          {/* Task Form */}
-          <div className="bg-gray-800 p-4 rounded border border-gray-700">
-            <h4 className="text-white font-medium mb-3">
-              {editing ? 'Edit Task' : 'Add New Task'}
-            </h4>
-            
-            <div className="grid grid-cols-1 gap-3">
-              <input 
-                value={form.title} 
-                onChange={(e) => setForm(s => ({ ...s, title: e.target.value }))} 
-                placeholder="Task title *" 
-                className="p-2 bg-gray-900 border border-gray-700 rounded text-white text-sm"
-                disabled={saving}
-              />
-              
-              <textarea 
-                value={form.description} 
-                onChange={(e) => setForm(s => ({ ...s, description: e.target.value }))} 
-                placeholder="Description (optional)" 
-                className="p-2 bg-gray-900 border border-gray-700 rounded text-white text-sm" 
-                rows={2}
-                disabled={saving}
-              />
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <div>
-                  <label className="text-xs text-gray-400 mb-1 block">Deadline *</label>
-                  <input 
-                    value={form.date} 
-                    onChange={(e) => setForm(s => ({ ...s, date: e.target.value }))} 
-                    type="date" 
-                    className="p-2 bg-gray-900 border border-gray-700 rounded text-white text-sm w-full"
-                    disabled={saving}
-                  />
                 </div>
-                
-                <div>
-                  <label className="text-xs text-gray-400 mb-1 block">Completed Date</label>
-                  <input 
-                    value={form.completedDate} 
-                    onChange={(e) => setForm(s => ({ ...s, completedDate: e.target.value }))} 
-                    type="date" 
-                    className="p-2 bg-gray-900 border border-gray-700 rounded text-white text-sm w-full"
-                    disabled={saving}
-                  />
-                </div>
-              </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
-                  <label className="text-xs text-gray-400 mb-1 block">Status</label>
-                  <select 
-                    value={form.status} 
-                    onChange={(e) => setForm(s => ({ ...s, status: e.target.value }))} 
-                    className="p-2 bg-gray-900 border border-gray-700 rounded text-white text-sm w-full"
-                    disabled={saving}
-                  >
-                    {STATUSES.map(s => <option key={s} value={s}>{s}</option>)}
-                  </select>
+                  <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest ml-1">Deadline</label>
+                  <input type="date" value={form.date} onChange={e => setForm({...form, date: e.target.value})} className="w-full mt-2 p-4 bg-black/40 border border-white/10 rounded-xl text-white" />
                 </div>
-                
+
                 <div>
-                  <label className="text-xs text-gray-400 mb-1 block">Priority</label>
-                  <select 
-                    value={form.priority} 
-                    onChange={(e) => setForm(s => ({ ...s, priority: e.target.value }))} 
-                    className="p-2 bg-gray-900 border border-gray-700 rounded text-white text-sm w-full"
-                    disabled={saving}
-                  >
+                  <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest ml-1">Priority</label>
+                  <select value={form.priority} onChange={e => setForm({...form, priority: e.target.value})} className="w-full mt-2 p-4 bg-black/40 border border-white/10 rounded-xl text-white">
                     {PRIORITIES.map(p => <option key={p} value={p}>{p}</option>)}
                   </select>
                 </div>
               </div>
 
-              <input 
-                value={form.assignedTo} 
-                onChange={(e) => setForm(s => ({ ...s, assignedTo: e.target.value }))} 
-                placeholder="Assigned to (comma separated names)" 
-                className="p-2 bg-gray-900 border border-gray-700 rounded text-white text-sm"
-                disabled={saving}
-              />
-
-              <input 
-                value={form.github} 
-                onChange={(e) => setForm(s => ({ ...s, github: e.target.value }))} 
-                placeholder="GitHub URL (optional)" 
-                className="p-2 bg-gray-900 border border-gray-700 rounded text-white text-sm"
-                disabled={saving}
-              />
-
-              <div className="flex items-center justify-end gap-2 mt-2">
-                <button 
-                  onClick={saveForm} 
-                  className="px-4 py-2 bg-yellow-500 hover:bg-yellow-600 rounded text-black font-medium disabled:opacity-50 flex items-center gap-2"
-                  disabled={saving}
-                >
-                  {saving && <Loader className="animate-spin" size={16} />}
-                  {editing ? 'Update Task' : 'Add Task'}
+              <div className="flex gap-4 mt-8">
+                <button onClick={saveForm} disabled={saving} className="flex-1 py-4 bg-yellow-500 text-black font-black uppercase text-xs tracking-widest rounded-xl hover:bg-yellow-400">
+                  {saving ? 'Transmitting...' : (editing ? 'Update Task' : 'Confirm Deployment')}
                 </button>
+                <button onClick={() => setShowForm(false)} className="px-8 py-4 bg-white/5 text-gray-400 font-bold rounded-xl hover:bg-white/10">Cancel</button>
               </div>
             </div>
+          )}
+
+          {/* Task List */}
+          <div className="space-y-4">
+            {tasks.map(task => (
+              <div key={task.id} className={`group flex items-center justify-between p-6 rounded-2xl border transition-all duration-300 ${task.status === 'Completed' ? 'bg-green-500/5 border-green-500/20' : 'bg-white/5 border-white/5 hover:border-yellow-500/30'}`}>
+                <div className="flex items-center gap-5 flex-1 min-w-0">
+                  <button 
+                    onClick={() => toggleTaskStatus(task)}
+                    className={`transition-colors shrink-0 ${task.status === 'Completed' ? 'text-green-500' : 'text-gray-600 hover:text-yellow-500'}`}
+                  >
+                    {task.status === 'Completed' ? <CheckSquare size={28} /> : <Square size={28} />}
+                  </button>
+                  
+                  <div className="min-w-0">
+                    <h4 className={`text-lg font-bold text-white transition-all ${task.status === 'Completed' ? 'line-through text-gray-500' : ''}`}>
+                      {task.title}
+                    </h4>
+                    <div className="flex flex-wrap gap-x-4 gap-y-1 mt-1">
+                      <span className="text-[9px] font-black uppercase tracking-widest text-gray-500 italic flex items-center gap-1">
+                         <Calendar size={10} /> Deadline: {task.date}
+                      </span>
+                      {task.assignedTo?.length > 0 && (
+                        <span className="text-[9px] font-black uppercase tracking-widest text-blue-400 italic">👤 {Array.isArray(task.assignedTo) ? task.assignedTo.join(', ') : task.assignedTo}</span>
+                      )}
+                      {/* --- THE COMPLETED DATE UI --- */}
+                      {task.status === 'Completed' && task.completedDate && (
+                        <span className="text-[9px] font-black uppercase tracking-widest text-green-500 italic bg-green-500/10 px-2 py-0.5 rounded">
+                          ✓ Finished: {task.completedDate}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2 ml-4 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
+                  <button onClick={() => { setEditing(task.id); setForm({...task, assignedTo: Array.isArray(task.assignedTo) ? task.assignedTo.join(', ') : task.assignedTo}); setShowForm(true); }} className="p-2 text-gray-500 hover:text-white transition-all"><Edit2 size={18}/></button>
+                  <button onClick={() => handleDeleteTask(task.id, task.title)} className="p-2 text-gray-500 hover:text-red-500 transition-all"><Trash2 size={18}/></button>
+                </div>
+              </div>
+            ))}
           </div>
         </div>
 
-        {/* Footer */}
-        <div className="p-4 flex items-center justify-end gap-2 border-t border-gray-800 flex-shrink-0">
-          <button 
-            onClick={onClose} 
-            className="px-4 py-2 bg-gray-700 hover:bg-gray-600 rounded text-white disabled:opacity-50"
-            disabled={saving}
-          >
-            Close
+        <div className="p-8 bg-white/5 border-t border-white/10 flex justify-end shrink-0">
+          <button onClick={() => { onSave({...project, tasks}); onClose(); }} className="px-12 py-4 bg-white/10 hover:bg-white/20 text-white font-black uppercase text-xs tracking-widest rounded-2xl transition-all">
+            Update Dashboard
           </button>
         </div>
       </div>
+      
+      {/* CONFIRM DIALOG */}
+      {confirmDialog.show && (
+        <div className="fixed inset-0 z-[10000] flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-black/80 backdrop-blur-md" />
+          <div className="relative bg-gray-900 border border-white/20 p-8 rounded-3xl max-w-sm w-full text-center shadow-2xl">
+            <AlertTriangle size={40} className="text-red-500 mx-auto mb-4" />
+            <h4 className="text-xl font-black text-white uppercase italic mb-2">{confirmDialog.title}</h4>
+            <p className="text-gray-400 text-sm mb-6 leading-relaxed">{confirmDialog.message}</p>
+            <div className="flex gap-3">
+              <button onClick={() => setConfirmDialog({show: false})} className="flex-1 py-3 bg-white/5 text-white font-bold rounded-xl uppercase tracking-widest text-[10px]">Back</button>
+              <button onClick={confirmDialog.onConfirm} className="flex-1 py-3 bg-red-600 text-white font-bold rounded-xl uppercase tracking-widest text-[10px]">Delete</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* TOAST */}
+      {toast.show && (
+        <div className="fixed bottom-10 left-1/2 -translate-x-1/2 z-[10001] px-6 py-3 bg-gray-900 border border-yellow-500/30 rounded-full flex items-center gap-3 shadow-2xl animate-in fade-in slide-in-from-bottom-5">
+          {toast.type === 'success' ? <CheckCircle className="text-green-500" size={18}/> : <XCircle className="text-red-500" size={18}/>}
+          <span className="text-white font-bold text-[10px] uppercase tracking-[0.2em]">{toast.message}</span>
+        </div>
+      )}
     </div>
   );
+
+  return createPortal(modalLayout, document.body);
 }

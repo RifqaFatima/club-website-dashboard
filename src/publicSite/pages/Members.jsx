@@ -1,7 +1,3 @@
-
-
-
-
 import { useState, useEffect } from 'react';
 import { getAllMembers } from '../../firebase/firestore';
 import { Mail, Shield, Users, GitMerge } from 'lucide-react';
@@ -51,13 +47,13 @@ const Members = () => {
     ];
 
     const getAvatarUrl = (name) => {
+        // Updated color to eab308 (yellow-500)
         return `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=1f2937&color=eab308&size=128&bold=true`;
     };
 
     const MemberCard = ({ member, showRole = false }) => {
         return (
             <div className="group relative bg-white/5 backdrop-blur-sm rounded-2xl p-8 text-center transition-all duration-500 hover:bg-white/10 border border-white/10 hover:border-yellow-500/50 hover:-translate-y-3 shadow-2xl">
-                {/* Decorative background glow */}
                 <div className="absolute inset-0 bg-yellow-500/5 opacity-0 group-hover:opacity-100 transition-opacity rounded-2xl blur-xl" />
                 
                 <div className="relative z-10">
@@ -72,7 +68,7 @@ const Members = () => {
                         </div>
                     </div>
                     
-                    <h3 className="text-2xl font-black text-white mb-2 tracking-tight group-hover:text-yellow-400 transition-colors">{member.name}</h3>
+                    <h3 className="text-2xl font-black text-white mb-2 tracking-tight group-hover:text-yellow-500 transition-colors">{member.name}</h3>
                     
                     {showRole && member.role && (
                         <div className="inline-block px-3 py-1 rounded-full bg-yellow-500/10 border border-yellow-500/20 mb-3">
@@ -110,7 +106,7 @@ const Members = () => {
 
     return (
         <div className="bg-gray-900 min-h-screen py-24 px-4 sm:px-6 lg:px-8 bg-[radial-gradient(circle_at_top_right,_var(--tw-gradient-stops))] from-yellow-500/10 via-gray-900 to-black">
-            {/* Gradient Header */}
+            {/* Header - Kept original gradient as requested */}
             <div className="max-w-4xl mx-auto text-center mb-16">
                 <h1 className="text-5xl md:text-7xl font-black text-white mb-4 tracking-tighter uppercase italic">
                     Our <span className="bg-gradient-to-r from-yellow-300 via-yellow-500 to-yellow-700 bg-clip-text text-transparent">Nexus</span>
@@ -118,7 +114,7 @@ const Members = () => {
                 <p className="text-gray-500 font-medium tracking-[0.3em] uppercase text-xs">Architects of Innovation • IEEE CS AMU</p>
             </div>
 
-            {/* Glassmorphic Tabs */}
+            {/* Glassmorphic Tabs - Updated to yellow-500 */}
             <div className="flex justify-center mb-16">
                 <div className="bg-white/5 backdrop-blur-md p-1.5 rounded-2xl flex gap-1 border border-white/10">
                     {[
