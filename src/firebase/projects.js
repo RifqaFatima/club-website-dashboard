@@ -20,7 +20,7 @@ import {
   serverTimestamp
 } from "firebase/firestore";
 
-import { db } from "./firestore";
+import { db } from "./firebase";
 /*chairpersonuid is hardcoded for simplicity*/
 
 const CHAIRPERSON_UID = "axdCCJOm2mPQsmpuKEADsvuNO9B2";
@@ -68,14 +68,50 @@ export async function getAllProjects() {
 /**
  * Fetch tasks of a specific project
  */
+//REPLACE
+// export async function getProjectTasks(projectId) {
+//   const tasksRef = collection(db, "projects", projectId, "tasks");
+//   const snapshot = await getDocs(tasksRef);
+
+//   return snapshot.docs.map(d => ({
+//     id: d.id,
+//     ...d.data()
+//   }));
+// }
 export async function getProjectTasks(projectId) {
   const tasksRef = collection(db, "projects", projectId, "tasks");
   const snapshot = await getDocs(tasksRef);
 
-  return snapshot.docs.map(d => ({
-    id: d.id,
-    ...d.data()
-  }));
+  return snapshot.docs.map(d => {
+    const data = d.data();
+    
+    // Convert Firestore timestamps to date strings
+    const deadlineDate = data.deadline?.toDate ? 
+      data.deadline.toDate().toISOString().split('T')[0] : 
+      data.deadline || '';
+    
+    const completedDate = data.completedAt?.toDate ? 
+      data.completedAt.toDate().toISOString().split('T')[0] : 
+      '';
+    
+    // Map status from backend format to frontend format
+    let displayStatus = data.status || 'In-Progress';
+    if (displayStatus === 'in-progress') displayStatus = 'In-Progress';
+    if (displayStatus === 'completed') displayStatus = 'Completed';
+    if (displayStatus === 'delayed') displayStatus = 'Delayed';
+    
+    return {
+      id: d.id,
+      title: data.title || '',
+      description: data.description || '',
+      date: deadlineDate,  // Frontend expects "date"
+      completedDate: completedDate,  // Frontend expects "completedDate"
+      status: displayStatus,  // Frontend expects capitalized
+      priority: data.priority || 'Medium',
+      assignedTo: Array.isArray(data.assignedTo) ? data.assignedTo : [data.assignedTo || ''],
+      github: data.github || ''
+    };
+  });
 }
 
 /**

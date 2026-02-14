@@ -1,5 +1,6 @@
+
 import { useState } from 'react';
-import { Calendar, Clock, MapPin, AlertCircle } from 'lucide-react';
+import { Calendar, Clock, MapPin, AlertCircle, Sparkles } from 'lucide-react';
 import PitchPerfectImg from '../../assets/events/PitchPerfectImg.jpg';
 import LatexEssImg from '../../assets/events/LatexEssImg.jpg';
 import AIDataImg from '../../assets/events/AIDataImg.jpg';
@@ -18,13 +19,6 @@ const Events = () => {
             description: "A project proposal presentation competition",
         },
         {
-            title: "Coding Contest",
-            date: "Aug 05, 2024",
-            time: "3:00 PM",
-            location: "Online",
-            description: "Competitive programming contest for beginners."
-        },
-        {
             title: "Latex Essentials: Document Making Workshop",
             image: LatexEssImg,
             date: "Aug 18-19, 2024",
@@ -32,27 +26,13 @@ const Events = () => {
             location: "Lab 1",
             description: "A two-day workshop on LaTeX Essentials: Perfecting the art of documents making."
         },
-         {
-            title: "Tech Talk 2024",
-            date: "Sep 20, 2024",
-            time: "11:00 AM",
-            location: "Assembly Hall",
-            description: "Expert talk on future of AI and Machine Learning."
-        },
         {
             title: "Git & Go: Workshop",
             image: GitGoImg,
             date: "Oct 13, 2024",
             time: "7:00 PM",
             location: "Online",
-            desription: "A workshop on beginner's journey into open source",
-        },
-        {
-            title: "Web Dev Workshop",
-            date: "Oct 15, 2024",
-            time: "2:00 PM",
-            location: "Lab 1",
-            description: "A hands-on session on React and Tailwind CSS."
+            description: "A workshop on beginner's journey into open source",
         },
         {
             title: "AI & Data Science Webinar",
@@ -62,74 +42,105 @@ const Events = () => {
             location: "Online",
             description: "Aimed to shed light on the growing influence of Artificial Intelligence and Data Science in today's industrial landscape"
         },
-
-    
     ];
 
     return (
-        <div className="bg-gray-900 min-h-screen py-16 px-4 sm:px-6 lg:px-8">
+        <div className="bg-gray-900 min-h-screen py-24 px-4 sm:px-6 lg:px-8 bg-[radial-gradient(circle_at_bottom_left,_var(--tw-gradient-stops))] from-yellow-500/5 via-gray-900 to-black">
             <div className="max-w-7xl mx-auto">
-                <h1 className="text-4xl font-bold text-center text-white mb-10">Events</h1>
+                
+                {/* Enhanced Heading */}
+                <div className="text-center mb-16">
+                    <h1 className="text-5xl md:text-7xl font-black text-white mb-4 tracking-tighter uppercase italic">
+                        Club <span className="bg-gradient-to-r from-yellow-300 via-yellow-500 to-yellow-700 bg-clip-text text-transparent">Events</span>
+                    </h1>
+                    <div className="flex items-center justify-center gap-3">
+                        <span className="h-px w-8 bg-gray-700"></span>
+                        <p className="text-gray-500 font-medium tracking-[0.3em] uppercase text-xs">Knowledge • Innovation • Community</p>
+                        <span className="h-px w-8 bg-gray-700"></span>
+                    </div>
+                </div>
 
-                {/* Tabs */}
-                <div className="flex justify-center mb-12">
-                    <div className="bg-gray-800 p-1 rounded-lg inline-flex">
+                {/* Glassmorphic Tabs */}
+                <div className="flex justify-center mb-16">
+                    <div className="bg-white/5 backdrop-blur-md p-1.5 rounded-2xl flex gap-1 border border-white/10 shadow-2xl">
                         <button
                             onClick={() => setActiveTab('upcoming')}
-                            className={`px-6 py-2 rounded-md font-medium transition-colors ${activeTab === 'upcoming'
-                                    ? 'bg-yellow-500 text-gray-900'
-                                    : 'text-gray-300 hover:text-white'
-                                }`}
+                            className={`px-8 py-3 rounded-xl font-bold text-sm transition-all duration-300 ${
+                                activeTab === 'upcoming'
+                                    ? 'bg-yellow-500 text-gray-900 shadow-[0_0_20px_rgba(234,179,8,0.3)]'
+                                    : 'text-gray-400 hover:text-white hover:bg-white/5'
+                            }`}
                         >
-                            Upcoming Events
+                            Upcoming
                         </button>
                         <button
                             onClick={() => setActiveTab('past')}
-                            className={`px-6 py-2 rounded-md font-medium transition-colors ${activeTab === 'past'
-                                    ? 'bg-yellow-500 text-gray-900'
-                                    : 'text-gray-300 hover:text-white'
-                                }`}
+                            className={`px-8 py-3 rounded-xl font-bold text-sm transition-all duration-300 ${
+                                activeTab === 'past'
+                                    ? 'bg-yellow-500 text-gray-900 shadow-[0_0_20px_rgba(234,179,8,0.3)]'
+                                    : 'text-gray-400 hover:text-white hover:bg-white/5'
+                            }`}
                         >
-                            Past Events
+                            Past Archives
                         </button>
                     </div>
                 </div>
 
-                {/* Content */}
+                {/* Content Section */}
                 <div className="min-h-[400px]">
                     {activeTab === 'upcoming' ? (
-                        <div className="flex flex-col items-center justify-center p-12 bg-gray-800 rounded-lg border border-gray-700 border-dashed h-96">
-                            <AlertCircle size={64} className="text-gray-600 mb-6" />
-                            <h3 className="text-2xl font-bold text-gray-300 mb-2">No Upcoming Events</h3>
-                            <p className="text-gray-500">Check back soon for exciting new events!</p>
+                        <div className="flex flex-col items-center justify-center p-12 bg-white/5 backdrop-blur-sm rounded-3xl border border-gray-700 border-dashed h-96 group transition-all duration-500 hover:border-yellow-500/50">
+                            <div className="relative mb-6">
+                                <AlertCircle size={64} className="text-gray-700 group-hover:text-yellow-500/20 transition-colors duration-500" />
+                                <Sparkles size={24} className="absolute -top-2 -right-2 text-yellow-500 animate-pulse" />
+                            </div>
+                            <h3 className="text-2xl font-black text-gray-400 mb-2 uppercase tracking-tight">Quiet for now</h3>
+                            <p className="text-gray-600 font-medium italic">We're cooking up something big. Stay tuned.</p>
                         </div>
                     ) : (
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10 animate-[fadeIn_0.5s_ease-out]">
                             {pastEvents.map((event, index) => (
-                                <div key={index} className="bg-gray-800 rounded-lg overflow-hidden border border-gray-700 hover:border-yellow-500 transition-colors shadow-lg group">
-                                    <img 
-                                    src={event.image}
-                                    alt={event.title}
-                                    className="h-48 w-full object-cover"
-                                    /> 
-                                    <div className="p-6">
-                                        <h3 className="text-xl font-bold text-white mb-2 group-hover:text-yellow-500 transition-colors">{event.title}</h3>
-                                        <div className="space-y-2 mb-4">
-                                            <div className="flex items-center text-gray-400 text-sm">
-                                                <Calendar size={16} className="mr-2 text-yellow-500" />
+                                <div key={index} className="group relative bg-white/5 backdrop-blur-sm rounded-2xl overflow-hidden border border-white/10 hover:border-yellow-500/50 transition-all duration-500 hover:-translate-y-3 shadow-2xl">
+                                    {/* Image Container with Overlay */}
+                                    <div className="relative h-52 w-full overflow-hidden">
+                                        <img 
+                                            src={event.image}
+                                            alt={event.title}
+                                            className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-110"
+                                        />
+                                        <div className="absolute inset-0 bg-gradient-to-t from-gray-900 via-transparent to-transparent opacity-60" />
+                                        <div className="absolute top-4 right-4 bg-yellow-500 text-gray-900 text-[10px] font-black px-3 py-1 rounded-full uppercase tracking-widest shadow-lg">
+                                            Completed
+                                        </div>
+                                    </div>
+
+                                    <div className="p-8">
+                                        <h3 className="text-xl font-black text-white mb-4 group-hover:text-yellow-400 transition-colors leading-tight">
+                                            {event.title}
+                                        </h3>
+                                        
+                                        <div className="grid grid-cols-1 gap-3 mb-6">
+                                            <div className="flex items-center text-gray-400 text-xs font-bold uppercase tracking-wider">
+                                                <Calendar size={14} className="mr-3 text-yellow-500" />
                                                 {event.date}
                                             </div>
-                                            <div className="flex items-center text-gray-400 text-sm">
-                                                <Clock size={16} className="mr-2 text-yellow-500" />
+                                            <div className="flex items-center text-gray-400 text-xs font-bold uppercase tracking-wider">
+                                                <Clock size={14} className="mr-3 text-yellow-500" />
                                                 {event.time}
                                             </div>
-                                            <div className="flex items-center text-gray-400 text-sm">
-                                                <MapPin size={16} className="mr-2 text-yellow-500" />
+                                            <div className="flex items-center text-gray-400 text-xs font-bold uppercase tracking-wider">
+                                                <MapPin size={14} className="mr-3 text-yellow-500" />
                                                 {event.location}
                                             </div>
                                         </div>
-                                        <p className="text-gray-400 text-sm">{event.description}</p>
+                                        
+                                        <p className="text-gray-500 text-sm leading-relaxed line-clamp-2 italic">
+                                            {event.description || event.desription}
+                                        </p>
                                     </div>
+                                    
+                                    {/* Subtle Bottom Glow */}
+                                    <div className="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-transparent via-yellow-500/20 to-transparent scale-x-0 group-hover:scale-x-100 transition-transform duration-500" />
                                 </div>
                             ))}
                         </div>
