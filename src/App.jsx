@@ -13,6 +13,7 @@ import Login from './auth/Login';
 import MemberDashboard from './memberDashboard/pages/memberDashboard';
 import ProjectTimeline from './memberDashboard/pages/ProjectTimeline';
 import ProtectedRoute from './components/ProtectedRoute';
+import ChangePassword from "./auth/ChangePassword";
 
 function App() {
   return (
@@ -40,6 +41,14 @@ function App() {
                   </ProtectedRoute>
                 } 
               />
+<Route
+  path="/change-password"
+  element={
+    <ProtectedRoute>
+      <ChangePassword />
+    </ProtectedRoute>
+  }
+/>
 
               <Route
                 path="/dashboard/projects"

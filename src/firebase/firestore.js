@@ -1,5 +1,5 @@
 
-import { doc, getDoc, collection, getDocs, query, where, limit } from "firebase/firestore";
+import { doc, getDoc, collection, getDocs, query, where, updateDoc, limit } from "firebase/firestore";
 import { db } from "./firebase";
 
 export const getMemberProfile = async (uid) => {
@@ -47,6 +47,28 @@ export const getUserData = async (uid) => {
 
   return userSnap.data();
 };
+export const markPasswordChanged = async (authUid) => {
+  if (!authUid) throw new Error("UID required");
+
+  const q = query(
+    collection(db, "memberProfiles"),
+    where("authUid", "==", authUid),
+    limit(1)
+  );
+
+  const snapshot = await getDocs(q);
+
+  if (snapshot.empty) {
+    throw new Error("Profile not found");
+  }
+
+  const profileDoc = snapshot.docs[0];
+
+  await updateDoc(doc(db, "memberProfiles", profileDoc.id), {
+    needsPasswordChange: false
+  });
+};
+
 
 export const getAllMembers = async () => {
   try {

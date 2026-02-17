@@ -9,7 +9,7 @@ const ChangePassword = () => {
     const [password, setPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
     const [status, setStatus] = useState({ loading: false, error: '' });
-    const { currentUser } = useAuth();
+    const { currentUser, userProfile } = useAuth();
     const navigate = useNavigate();
 
     const handleUpdate = async (e) => {
@@ -22,7 +22,7 @@ const ChangePassword = () => {
             await updateUserPassword(currentUser, password);
             await markPasswordChanged(currentUser.uid);
             // We force a page reload or navigate so AuthContext refreshes the profile
-            window.location.href = '/dashboard'; 
+            window.location.href = "/dashboard";
         } catch (err) {
             setStatus({ loading: false, error: err.message || "Failed to update password." });
         }

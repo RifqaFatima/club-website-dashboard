@@ -7,6 +7,15 @@ import {
 import { auth } from "./firebase";
 import { getMemberProfile } from "./firestore";
 
+import { updatePassword } from "firebase/auth";
+
+export const updateUserPassword = async (user, newPassword) => {
+  if (!user) {
+    throw new Error("No authenticated user");
+  }
+
+  return await updatePassword(user, newPassword);
+};
 // Login member
 export const loginMember = async (email, password) => {
   try { 
