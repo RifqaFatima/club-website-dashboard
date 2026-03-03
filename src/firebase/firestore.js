@@ -87,3 +87,72 @@ export const getAllMembers = async () => {
     throw new Error("Failed to fetch members: " + error.message);
   }
 };
+
+/**
+ * Updates a member's own profile (Skills & Learning Goals only)
+ */
+// export const updateMemberProfile = async (authUid, newData) => {
+//   if (!authUid) throw new Error("Authentication UID is required");
+
+//   try {
+//     const q = query(
+//       collection(db, "memberProfiles"),
+//       where("authUid", "==", authUid),
+//       limit(1)
+//     );
+
+//     const snapshot = await getDocs(q);
+//     if (snapshot.empty) throw new Error("Profile document not found");
+
+//     const profileDoc = snapshot.docs[0];
+//     const docRef = doc(db, "memberProfiles", profileDoc.id);
+//     const existingData = profileDoc.data();
+
+//     // Merging existing data with new skills/goals to satisfy security rules
+//     await updateDoc(docRef, {
+//       ...existingData,
+//       skills: newData.skills || existingData.skills,
+//       wantToLearn: newData.wantToLearn || existingData.wantToLearn
+//     });
+
+//     return true;
+//   } catch (error) {
+//     console.error("❌ Error updating profile:", error);
+//     throw error;
+//   }
+// };
+
+/**
+ * Updates a member's own profile (Skills & Learning Goals only)
+ */
+export const updateMemberProfile = async (authUid, newData) => {
+  if (!authUid) throw new Error("Authentication UID is required");
+
+  try {
+    // 1. Find the document
+    const q = query(
+      collection(db, "memberProfiles"),
+      where("authUid", "==", authUid),
+      limit(1)
+    );
+
+    const snapshot = await getDocs(q);
+    if (snapshot.empty) throw new Error("Profile document not found");
+
+    const profileDoc = snapshot.docs[0];
+    const docRef = doc(db, "memberProfiles", profileDoc.id);
+
+    // 2. ONLY update the allowed fields.
+    // By NOT sending 'role' or 'warnings', we satisfy security rules 
+    // that say "user cannot update role".
+    await updateDoc(docRef, {
+      skills: newData.skills,
+      wantToLearn: newData.wantToLearn
+    });
+
+    return true;
+  } catch (error) {
+    console.error("❌ Error updating profile:", error);
+    throw error;
+  }
+};
