@@ -8,7 +8,7 @@ const MemberCard = ({ member, onEditClick }) => {
   const { currentUser } = useAuth();
   //const [isModalOpen, setIsModalOpen] = useState(false);
   const isChairperson =
-  currentUser?.uid === "UJRHb92IQ3TOmLSJNOochILi0yA2";
+  currentUser?.uid === "axdCCJOm2mPQsmpuKEADsvuNO9B2";
 async function addKudos(profileId, current) {
   const newValue = (current ?? 0) + 1;
 
