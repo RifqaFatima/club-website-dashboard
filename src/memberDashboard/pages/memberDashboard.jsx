@@ -1,3 +1,5 @@
+import { collection, onSnapshot } from "firebase/firestore";
+import { db } from "../../firebase/firebase";
 import { useState, useEffect, useCallback } from 'react';
 import { getAllMembers } from '../../firebase/firestore';
 import MemberCard from '../components/MemberCard';
@@ -24,8 +26,28 @@ const MemberDashboard = () => {
   }, []);
 
   useEffect(() => {
-    fetchMembers();
-  }, [fetchMembers]);
+  const ref = collection(db, "memberProfiles");
+
+  const unsubscribe = onSnapshot(
+    ref,
+    (snapshot) => {
+      const membersData = snapshot.docs.map((doc) => ({
+        id: doc.id,
+        ...doc.data()
+      }));
+
+      setMembers(membersData);
+      setLoading(false);
+    },
+    (error) => {
+      console.error("Error listening to members:", error);
+      setError("failed to load roster");
+      setLoading(false);
+    }
+  );
+
+  return () => unsubscribe();
+}, []);
 
   if (loading) {
     return (

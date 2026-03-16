@@ -1,3 +1,4 @@
+import { updateMemberStats } from "../../firebase/firestore";
 import { useState } from 'react'; // Add useState
 import { Award, Target, Pencil, ShieldAlert, Star } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext'; // Adjusted path to reach your context
@@ -6,7 +7,39 @@ import EditProfileModal from './EditProfileModal';
 const MemberCard = ({ member, onEditClick }) => {
   const { currentUser } = useAuth();
   //const [isModalOpen, setIsModalOpen] = useState(false);
-  
+  const isChairperson =
+  currentUser?.uid === "UJRHb92IQ3TOmLSJNOochILi0yA2";
+async function addKudos(profileId, current) {
+  const newValue = (current ?? 0) + 1;
+
+  await updateMemberStats(profileId, {
+    appreciations: newValue
+  });
+}
+
+async function removeKudos(profileId, current) {
+  const newValue = Math.max((current ?? 0) - 1, 0);
+
+  await updateMemberStats(profileId, {
+    appreciations: newValue
+  });
+}
+
+async function addWarning(profileId, current) {
+  const newValue = Math.min((current ?? 0) + 1, 3);
+
+  await updateMemberStats(profileId, {
+    warnings: newValue
+  });
+}
+
+async function removeWarning(profileId, current) {
+  const newValue = Math.max((current ?? 0) - 1, 0);
+
+  await updateMemberStats(profileId, {
+    warnings: newValue
+  });
+}
   // Ownership check
   const isOwner = currentUser?.uid === member.authUid;
   const warningCount = member.warnings || 0;
@@ -39,15 +72,39 @@ const MemberCard = ({ member, onEditClick }) => {
         <div className="flex items-center gap-1.5">
           <ShieldAlert size={12} className="text-gray-500 mr-1" />
           {[1, 2, 3].map((dot) => (
-            <div 
-              key={dot}
-              className={`h-2 w-2 rounded-full transition-colors duration-500 ${
-                dot <= warningCount ? 'bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.6)]' : 'bg-gray-700'
-              }`}
-            />
-          ))}
-        </div>
-        <span className="text-[10px] font-bold text-gray-500 uppercase tracking-tighter">Standings</span>
+  <div
+    key={dot}
+    onClick={() =>
+      isChairperson && updateWarnings(member.id, dot)
+    }
+    className={`h-2 w-2 rounded-full transition-colors duration-500 ${
+      dot <= warningCount
+        ? "bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.6)]"
+        : "bg-gray-700"
+        }`}
+      />
+    ))}
+  </div>
+   {isChairperson && (
+    <div className="flex items-center gap-1">
+
+      <button
+        onClick={() => removeWarning(member.id, warningCount)}
+        className="w-6 h-6 flex items-center justify-center rounded-md bg-red-500/10 text-red-400 hover:bg-red-500/20 transition"
+      >
+        −
+      </button>
+
+      <button
+        onClick={() => addWarning(member.id, warningCount)}
+        className="w-6 h-6 flex items-center justify-center rounded-md bg-green-500/10 text-green-400 hover:bg-green-500/20 transition"
+      >
+        +
+      </button>
+
+    </div>
+  )}
+
       </div>
 
       {/* Skills */}
@@ -80,14 +137,43 @@ const MemberCard = ({ member, onEditClick }) => {
         </div>
       </div>
 
-      {/* APPRECIATIONS */}
-      <div className="pt-4 border-t border-gray-700/50 flex items-center justify-between">
-        <div className="flex items-center gap-1">
-          <Star className="text-yellow-500 fill-yellow-500" size={14} />
-          <span className="text-xs font-bold text-gray-300">{member.appreciations || 0}</span>
-          <span className="text-[10px] text-gray-500 uppercase ml-1">Kudos</span>
-        </div>
-      </div>
+   {/* APPRECIATIONS */}
+<div className="pt-4 border-t border-gray-700/50 flex items-center justify-between">
+
+  {/* Metric */}
+  <div className="flex items-center gap-2">
+    <Star className="text-yellow-400 fill-yellow-400" size={15} />
+
+    <span className="text-sm font-semibold text-gray-200">
+      {member.appreciations ?? 0}
+    </span>
+
+    <span className="text-[10px] text-gray-500 uppercase tracking-wider">
+      Kudos
+    </span>
+  </div>
+
+  {/* Chairperson control */}
+  {isChairperson && (
+    <div className="flex items-center gap-1">
+
+      <button
+        onClick={() => removeKudos(member.id, member.appreciations)}
+        className="w-6 h-6 flex items-center justify-center rounded-md bg-red-500/10 text-red-400 hover:bg-red-500/20 transition"
+      >
+        −
+      </button>
+
+      <button
+        onClick={() => addKudos(member.id, member.appreciations)}
+        className="w-6 h-6 flex items-center justify-center rounded-md bg-green-500/10 text-green-400 hover:bg-green-500/20 transition"
+      >
+        +
+      </button>
+    </div>
+  )}
+
+</div>
     </div>
     
 

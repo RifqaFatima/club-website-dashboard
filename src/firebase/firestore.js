@@ -88,6 +88,20 @@ export const getAllMembers = async () => {
   }
 };
 
+/* =========================
+   UPDATE MEMBER STATS
+   (Chairperson only)
+========================= */
+
+export const updateMemberStats = async (profileId, updates) => {
+  if (!profileId) {
+    throw new Error("Profile ID required");
+  }
+
+  const ref = doc(db, "memberProfiles", profileId);
+
+  await updateDoc(ref, updates);
+};
 /**
  * Updates a member's own profile (Skills & Learning Goals only)
  */
